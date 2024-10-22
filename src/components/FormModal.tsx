@@ -44,7 +44,7 @@ type FormType = {
     table: 'teacher' | 'student' |'parent' | 'subject' | 'class' | 'lesson' | 'exam' | 'assigment' | 'result' | 'attendance' | 'event' | 'announcement'
     type: 'create' | 'update' | 'delete'
     data?: any
-    id?: number
+    id?: number | string
 }
 
 const FormModal = ({table, type, data, id}: FormType) => {
