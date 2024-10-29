@@ -2,9 +2,9 @@ import FormModal from '@/components/FormModal'
 import Pagination from '@/components/Pagination'
 import Table from '@/components/Table'
 import TableSearch from '@/components/TableSearch'
-import { resultsData, role } from '@/lib/data'
 import prisma from '@/lib/prisma'
 import { ITEM_PER_PAGE } from '@/lib/settings'
+import { currentUserId, role } from '@/lib/utils'
 import { Prisma } from '@prisma/client'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -62,10 +62,10 @@ const columns = [
         accessor: 'date',
         className: 'hidden md:table-cell'
     },
-    {
+    ...(role === 'admin' || role === 'teacher') ? [{
         header: 'Actions',
         accessor: 'actions',
-    },
+    }] : [],
 ]
 
 const renderRow = (item: ResultList) => {
@@ -86,7 +86,7 @@ const renderRow = (item: ResultList) => {
                     </button>
                 </Link> */}
                 {
-                    role === 'admin' &&
+                    (role === 'admin' || role === 'teacher') &&
                     (
                         <>
                             <FormModal table='result' type='update' data={item} />
@@ -149,6 +149,31 @@ const ResultListPage = async ({searchParams} : {
         })
     ])
 
+    // ROLE CONDITIONS
+    switch (role) {
+        case 'admin':
+            
+            break;
+        case 'teacher':
+            query.OR = [
+                {exam: {lesson: {teacherId: currentUserId!}}},
+                {assignment: {lesson: {teacherId: currentUserId!}}},
+            ]
+            break;
+        case 'student':
+            query.studentId = currentUserId!
+            break;
+    
+        case 'parent':
+            query.student = {
+                parentId: currentUserId!
+            }
+            break;
+    
+        default:
+            break;
+    }
+
     const data = dataRes.map(item =>{
         const assesment = item.exam || item.assignment
 
@@ -194,7 +219,7 @@ const ResultListPage = async ({searchParams} : {
                             />
                         </button>
                         {
-                            role === 'admin' &&
+                            (role === 'admin' || role == 'teacher') &&
                             <FormModal table='result' type='create' />
                             // <button className='w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow'>
                             //     <Image 

@@ -54,11 +54,10 @@ const columns = [
         accessor: 'address',
         className: 'hidden lg:table-cell'
     },
-    {
+    ...(role === 'admin') ? [{
         header: 'Actions',
         accessor: 'actions',
-        // className: 'hidden lg:table-cell'
-    },
+    }] : [],
 ]
 
 const renderRow = (item: TeacherList) => {
