@@ -1,11 +1,10 @@
-import { metadata } from '@/app/layout'
-import FormModal from '@/components/FormModal'
+import FormContainer from '@/components/FormContainer'
 import Pagination from '@/components/Pagination'
 import Table from '@/components/Table'
 import TableSearch from '@/components/TableSearch'
 import prisma from '@/lib/prisma'
 import { ITEM_PER_PAGE } from '@/lib/settings'
-import { currentUserId, role } from '@/lib/utils'
+import { auth } from '@clerk/nextjs/server'
 import { Announcement, Class, Prisma } from '@prisma/client'
 import Image from 'next/image'
 import React from 'react'
@@ -20,62 +19,68 @@ import React from 'react'
 
 type AnnouncementList = Announcement & {class: Class}
 
-const columns = [
-    {
-        header: 'Title',
-        accessor: 'title',
-    },
-    {
-        header: 'Class',
-        accessor: 'class',
-    },
-    {
-        header: 'Date',
-        accessor: 'date',
-        className: 'hidden md:table-cell'
-    },
-    ...(role === 'admin') ? [{
-        header: 'Actions',
-        accessor: 'actions',
-    }] : [],
-]
-
-const renderRow = (item: AnnouncementList) => {
-    return <tr key={item.id} className='border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight'>
-        <td className='flex items-center gap-4 p-4'>
-            {item.title}
-        </td>
-        <td>{item.class?.name || '-'}</td>
-        <td className='hidden md:table-cell'>{new Intl.DateTimeFormat('en-US').format(item.date)}</td>
-        <td>
-            <div className='flex items-center gap-2'>
-                {/* <Link href={`/list/teachers/${item.id}`}>
-                    <button className='w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky'>
-                        <Image src='/update.png' alt='' width={16} height={16} />
-                    </button>
-                </Link> */}
-                {
-                    role === 'admin' &&
-                    (
-                        <>
-                            <FormModal table='announcement' type='update' data={item} />
-                            <FormModal table='announcement' type='delete' id={item.id} />
-                        </>
-                        // <button className='w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple'>
-                        //     <Image src='/delete.png' alt='' width={16} height={16} />
-                        // </button>
-                    )
-                }
-            </div>
-        </td>
-    </tr>
-}
 
 const AnnouncementListPage = async ({searchParams} : 
     {
         searchParams: {[key:string]:string | undefined}
     }
 ) => {
+
+
+    const {userId, sessionClaims} = auth()
+    const role = (sessionClaims?.metadata as {role?:string})?.role
+    const currentUserId = userId
+
+    const columns = [
+        {
+            header: 'Title',
+            accessor: 'title',
+        },
+        {
+            header: 'Class',
+            accessor: 'class',
+        },
+        {
+            header: 'Date',
+            accessor: 'date',
+            className: 'hidden md:table-cell'
+        },
+        ...(role === 'admin') ? [{
+            header: 'Actions',
+            accessor: 'actions',
+        }] : [],
+    ]
+
+    const renderRow = (item: AnnouncementList) => {
+        return <tr key={item.id} className='border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight'>
+            <td className='flex items-center gap-4 p-4'>
+                {item.title}
+            </td>
+            <td>{item.class?.name || '-'}</td>
+            <td className='hidden md:table-cell'>{new Intl.DateTimeFormat('en-US').format(item.date)}</td>
+            <td>
+                <div className='flex items-center gap-2'>
+                    {/* <Link href={`/list/teachers/${item.id}`}>
+                        <button className='w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky'>
+                            <Image src='/update.png' alt='' width={16} height={16} />
+                        </button>
+                    </Link> */}
+                    {
+                        role === 'admin' &&
+                        (
+                            <>
+                                <FormContainer table='announcement' type='update' data={item} />
+                                <FormContainer table='announcement' type='delete' id={item.id} />
+                            </>
+                            // <button className='w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple'>
+                            //     <Image src='/delete.png' alt='' width={16} height={16} />
+                            // </button>
+                        )
+                    }
+                </div>
+            </td>
+        </tr>
+    }
 
     const {page, ...queryParams} = searchParams
 
@@ -149,7 +154,7 @@ const AnnouncementListPage = async ({searchParams} :
                         </button>
                         {
                             role === 'admin' &&
-                            <FormModal table='announcement' type='create' />
+                            <FormContainer table='announcement' type='create' />
                             // <button className='w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow'>
                             //     <Image 
                             //     src='/create.png'
